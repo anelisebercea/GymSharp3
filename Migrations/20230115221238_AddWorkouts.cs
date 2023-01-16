@@ -15,10 +15,10 @@ namespace GymSharp.Migrations
             migrationBuilder.Sql("INSERT INTO WorkoutPlan (MuscleGroupID, ExerciseID) VALUES (1, 23)");
             migrationBuilder.Sql("INSERT INTO WorkoutPlan (MuscleGroupID, ExerciseID) VALUES (1, 34)");
             migrationBuilder.Sql("INSERT INTO WorkoutPlan (MuscleGroupID, ExerciseID) VALUES (1, 35)");
-            migrationBuilder.Sql("INSERT INTO WorkoutPlan (MuscleGroupID, ExerciseID) VALUES (2, 2)");
-            migrationBuilder.Sql("INSERT INTO WorkoutPlan (MuscleGroupID, ExerciseID) VALUES (2, 6)");
-            migrationBuilder.Sql("INSERT INTO WorkoutPlan (MuscleGroupID, ExerciseID) VALUES (2, 13)");
-       
+            migrationBuilder.Sql("INSERT INTO WorkoutPlan (MuscleGroupID, ExerciseID) VALUES (3, 43)");
+            migrationBuilder.Sql("INSERT INTO WorkoutPlan (MuscleGroupID, ExerciseID) VALUES (3, 6)");
+            migrationBuilder.Sql("INSERT INTO WorkoutPlan (MuscleGroupID, ExerciseID) VALUES (3, 13)");
+            
         }
 
         /// <inheritdoc />

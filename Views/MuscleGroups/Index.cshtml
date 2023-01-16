@@ -1,10 +1,10 @@
-﻿@model IEnumerable<GymSharp.Models.MuscleGroup>
+﻿@model GymSharp.Models.GymViewModels.MuscleGroupIndexData
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Muscle Groups";
 }
 
-<h1>Index</h1>
+<h1>Muscle Groups</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -13,17 +13,27 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Group)
+                Group
             </th>
-            <th></th>
+            <th>
+                Exercises
+            </th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Group)
-            </td>
+@foreach (var item in Model.MuscleGroups) {
+
+            string selectedRow = "";
+            if (item.ID == (int?)ViewData["MuscleGroupID"])
+            {
+                selectedRow = "success";
+            }
+            <tr class="@selectedRow">
+                <td>
+                    @Html.DisplayFor(modelItem => item.Group)
+                </td>
+                
+
                 <td>
                     @{
                         foreach (var exercise in item.WorkoutPlans)
@@ -33,6 +43,7 @@
                     }
                 </td>
             <td>
+                <a asp-action="Index" asp-route-id="@item.ID">Select</a>
                 <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
                 <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
@@ -41,3 +52,38 @@
 }
     </tbody>
 </table>
+
+
+@if (Model.Exercises != null)
+{
+    <h3>Exercises Selected by Muscle Group</h3>
+    <table class="table">
+        <tr>
+            <th></th>
+            <th>Exercise Name</th>
+            <th>Trainer</th>
+            
+        </tr>
+        @foreach (var item in Model.Exercises)
+        {
+            string selectedRow = "";
+            if (item.ID == (int?)ViewData["ExerciseID"])
+            {
+                selectedRow = "success";
+            }
+            <tr class="@selectedRow">
+                <td>
+                    @Html.ActionLink("Select", "Index", new { exerciseID = item.ID })
+                </td>
+                <td>
+                    @item.ExerciseName
+                </td>
+                <td>
+                    @item.TrainerId
+                </td>
+                
+            </tr>
+        }
+    </table>
+}
+

@@ -25,7 +25,7 @@ namespace GymSharp.Controllers
             IQueryable<Exercise> exercise = _context.Exercises.AsNoTracking();
             ViewData["CurrentSort"] = sortOrder;
             ViewData["ExerciseNameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "exercise_name_desc" : "exercise_name";
-            ViewData["DifficultyLevelSortParm"] = sortOrder == "difficulty_level" ? "difficulty_level_desc" : "difficulty_level";
+            ViewData["TrainerSortParm"] = sortOrder == "trainer" ? "trainer_desc" : "trainer";
 
             if (searchString != null)
             {
@@ -52,11 +52,11 @@ namespace GymSharp.Controllers
                 case "exercise_name":
                     exercise = exercise.OrderBy(x => x.ExerciseName);
                     break;
-                case "difficulty_level_desc":
-                    exercise = exercise.OrderByDescending(x => x.DifficultyLevel);
+                case "trainer_desc":
+                    exercise = exercise.OrderByDescending(x => x.TrainerId);
                     break;
-                case "difficulty_level":
-                    exercise = exercise.OrderBy(x => x.DifficultyLevel);
+                case "trainer":
+                    exercise = exercise.OrderBy(x => x.TrainerId);
                     break;
                 default:
                     exercise = exercise.OrderBy(x => x.ExerciseName);

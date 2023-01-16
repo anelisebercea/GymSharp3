@@ -1,10 +1,10 @@
 ﻿@model PaginatedList<GymSharp.Models.Exercise>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Exercises";
 }
 
-<h1>Index</h1>
+<h1>Exercises</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -27,13 +27,13 @@
                 <a asp-action="Index" asp-route-sortOrder="@ViewData["ExerciseNameSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Exercise Name</a>
             </th>
             <th>
-                Trainer
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["TrainerSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Trainer</a>
             </th>
             <th>
                 Description
             </th>
             <th>
-                <a asp-action="Index" asp-route-sortOrder="@ViewData["DifficultyLevelSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Difficulty Level</a>
+                Difficulty Level
             </th>
             <th></th>
         </tr>
@@ -45,8 +45,15 @@
                 @Html.DisplayFor(modelItem => item.ExerciseName)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Trainer.Id)
-                @Html.DisplayFor(modelItem => item.Trainer.FirstName) @Html.DisplayFor(modelItem => item.Trainer.LastName)
+                @Html.DisplayFor(modelItem => item.TrainerId)
+
+
+                    @foreach (var trainer in Model)
+                    {
+                        @Html.DisplayFor(modelItem => trainer.Trainer.FirstName)
+                        @Html.DisplayFor(modelItem => trainer.Trainer.LastName)
+                    }
+
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Description)

@@ -18,6 +18,30 @@
                 <input asp-for="Group" class="form-control" />
                 <span asp-validation-for="Group" class="text-danger"></span>
             </div>
+
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <table>
+                        <tr>
+                            @{  int cnt = 0;
+                                List<GymSharp.Models.GymViewModels.WorkoutPlanData> exercises = ViewBag.Exercise;
+                                if(exercises!=null){
+                                foreach (var exercise in exercises)
+                                {
+                                    if (cnt++ % 3 == 0)
+                                    {
+                                            @:</tr><tr>
+                                    }
+                                    @:<td>  <input type="checkbox" name="selectedExercises" value="@exercise.ExerciseID"@(Html.Raw(exercise.IsPlanned ?  "checked=\"checked\"" : "")) />
+                                    @exercise.ExerciseID @: @exercise.ExerciseName 
+                                    @: </td>
+                                }
+                            @:</tr>
+                        }}
+                    </table>
+                </div>
+            </div>
+
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>

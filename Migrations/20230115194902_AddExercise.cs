@@ -10,6 +10,28 @@ namespace GymSharp.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+
+
+            migrationBuilder.InsertData(
+                table: "Trainer",
+                columns: new[] { "Id", "FirstName", "LastName", "Specialization", "Qualification" },
+                values: new object[,]
+                {
+                    { 1, "David", "Jones", "Strength", "Expert" },
+                    { 2, "Sarah", "Tomson", "Yoga", "Beginner" },
+                    { 3, "John", "Smith", "Strength", "Intermediate" },
+                    { 4, "Michael", "Williams", "Crossfit", "Beginner" },
+                    { 5, "Jennifer", "Jones", "Yoga", "Expert" },
+                    { 6, "Nicholas", "Garcia", "Crossfit", "Expert" },
+                    { 7, "James", "Brown", "Strength", "Beginner" },
+                    { 8, "Elizabeth", "Bayton", "Yoga", "Intermediate" },
+                    { 9, "Tom", "Anderson", "Crossfit", "Intermediate" },
+
+                 }
+
+                );
+
+
             migrationBuilder.InsertData(
                 table: "Exercise",
                 columns: new[] { "ExerciseName", "TrainerId", "Description", "DifficultyLevel" },

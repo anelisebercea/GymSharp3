@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using GymSharp.Data;
 using GymSharp.Models;
+using GymSharp.Models.GymViewModels;
+using System.Security.Policy;
+
 
 namespace GymSharp.Controllers
 {
@@ -19,11 +22,46 @@ namespace GymSharp.Controllers
             _context = context;
         }
 
-        // GET: MuscleGroups
+        // GET: MuscleGroups INDEX
+        /*
         public async Task<IActionResult> Index()
         {
               return View(await _context.MuscleGroups.ToListAsync());
         }
+        */
+
+
+        public async Task<IActionResult> Index(int? id, int? exerciseID)
+        {
+            var viewModel = new MuscleGroupIndexData();
+            viewModel.MuscleGroups = await _context.MuscleGroups
+            .Include(i => i.WorkoutPlans)
+            .ThenInclude(i => i.Exercise)
+            .ThenInclude(i => i.Measurements)
+            .ThenInclude(i => i.User)
+            .AsNoTracking()
+            .OrderBy(i => i.Group)
+            .ToListAsync();
+            if (id != null)
+            {
+                ViewData["MuscleGroupID"] = id.Value;
+                MuscleGroup musclegroup = viewModel.MuscleGroups.Where(
+                i => i.ID == id.Value).Single();
+                viewModel.Exercises = musclegroup.WorkoutPlans.Select(s => s.Exercise);
+            }
+            if (exerciseID != null)
+            {
+                ViewData["ExerciseID"] = exerciseID.Value;
+                viewModel.Measurements = viewModel.Exercises.Where(
+                x => x.ID == exerciseID).Single().Measurements;
+            }
+            return View(viewModel);
+        }
+
+
+
+
+
 
         // GET: MuscleGroups/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -73,48 +111,111 @@ namespace GymSharp.Controllers
                 return NotFound();
             }
 
-            var muscleGroup = await _context.MuscleGroups.FindAsync(id);
+            var muscleGroup = await _context.MuscleGroups
+                .Include(i => i.WorkoutPlans).ThenInclude(i => i.Exercise)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.ID == id);
             if (muscleGroup == null)
             {
                 return NotFound();
             }
+            PopulateWorkoutPlanData(muscleGroup);
+
             return View(muscleGroup);
         }
+
+        private void PopulateWorkoutPlanData(MuscleGroup muscleGroup)
+        {
+            var allBooks = _context.Exercises;
+            var musclegroupExercises = new HashSet<int>(muscleGroup.WorkoutPlans.Select(c => c.ExerciseID));
+            var viewModel = new List<WorkoutPlanData>();
+            foreach (var exercise in allBooks)
+            {
+                viewModel.Add(new WorkoutPlanData
+                {
+                    ExerciseID = exercise.ID,
+                    ExerciseName = exercise.ExerciseName,
+                    IsPlanned = musclegroupExercises.Contains(exercise.ID)
+                });
+            }
+            ViewData["Exercises"] = viewModel;
+        }
+
 
         // POST: MuscleGroups/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,Group")] MuscleGroup muscleGroup)
+        public async Task<IActionResult> Edit(int? id, string[] selectedExercises)
         {
-            if (id != muscleGroup.ID)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            var muscleGroupToUpdate = await _context.MuscleGroups
+                .Include(i => i.WorkoutPlans)
+                .ThenInclude(i => i.Exercise)
+                .FirstOrDefaultAsync(m => m.ID == id);
+
+            if (await TryUpdateModelAsync<MuscleGroup>( muscleGroupToUpdate, "", i => i.Group))
             {
+                UpdateWorkoutPlans(selectedExercises, muscleGroupToUpdate);
                 try
                 {
-                    _context.Update(muscleGroup);
+                    
                     await _context.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (DbUpdateException)
                 {
-                    if (!MuscleGroupExists(muscleGroup.ID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    ModelState.AddModelError("", "Unable to save changes. " + "Try again, and if the problem persists, ");
+
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(muscleGroup);
+            UpdateWorkoutPlans(selectedExercises, muscleGroupToUpdate);
+            PopulateWorkoutPlanData(muscleGroupToUpdate);
+
+            return View(muscleGroupToUpdate);
         }
+
+
+        private void UpdateWorkoutPlans(string[] selectedExercises, MuscleGroup muscleGroupToUpdate)
+        {
+            if (selectedExercises == null)
+            {
+                muscleGroupToUpdate.WorkoutPlans = new List<WorkoutPlan>();
+                return;
+            }
+            var selectedExercisesHS = new HashSet<string>(selectedExercises);
+            var workoutPlans = new HashSet<int>
+            (muscleGroupToUpdate.WorkoutPlans.Select(c => c.Exercise.ID));
+            foreach (var exercise in _context.Exercises)
+            {
+                if (selectedExercisesHS.Contains(exercise.ID.ToString()))
+                {
+                    if (!workoutPlans.Contains(exercise.ID))
+                    {
+                        muscleGroupToUpdate.WorkoutPlans.Add(new WorkoutPlan
+                        {
+                            MuscleGroupID = muscleGroupToUpdate.ID,
+                            ExerciseID = exercise.ID
+                        });
+                    }
+                }
+                else
+                {
+                    if (workoutPlans.Contains(exercise.ID))
+                    {
+                        WorkoutPlan exerciseToRemove = muscleGroupToUpdate.WorkoutPlans.FirstOrDefault(i => i.ExerciseID == exercise.ID);
+                        _context.Remove(exerciseToRemove);
+                    }
+                }
+            }
+        }
+
+
 
         // GET: MuscleGroups/Delete/5
         public async Task<IActionResult> Delete(int? id)
