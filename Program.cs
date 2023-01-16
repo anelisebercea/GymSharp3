@@ -4,19 +4,22 @@ using Microsoft.EntityFrameworkCore;
 using GymSharp.Hubs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using GymSharp.Areas.Identity.Data;
+//using GymSharp.GymModel.Data;
+using GymSharp.Areas.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<GymContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("GymConnection")));
-builder.Services.AddDbContext<IdentityContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("GymConnection")));
+builder.Services.AddDbContext<GymContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<IdentityContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-     .AddRoles<IdentityRole>()
+    // .AddRoles<IdentityRole>()
      .AddEntityFrameworkStores<IdentityContext>();
+
 
 
 
