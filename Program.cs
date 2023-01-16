@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 //using GymSharp.GymModel.Data;
 using GymSharp.Areas.Identity;
+using Microsoft.AspNetCore.Identity;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,9 +18,30 @@ builder.Services.AddDbContext<GymContext>(options => options.UseSqlServer(builde
 builder.Services.AddDbContext<IdentityContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    // .AddRoles<IdentityRole>()
-     .AddEntityFrameworkStores<IdentityContext>();
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = true;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(1);
+    options.Lockout.MaxFailedAccessAttempts = 3;
+    options.Lockout.AllowedForNewUsers = true;
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequiredUniqueChars = 1;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<IdentityContext>()
+.AddDefaultTokenProviders();
+
+
+
+builder.Services.AddAuthorization(opts => {
+    opts.AddPolicy("OnlyCertified", policy => {
+        policy.RequireClaim("Department", "Fitness");
+    });
+});
 
 
 
@@ -47,7 +70,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{contApplicationroller=Home}/{action=Index}/{id?}");
 
 app.MapHub<ChatHub>("/Chat");
 app.MapRazorPages();
