@@ -51,5 +51,10 @@ namespace GymSharp.Controllers
         }
 
 
+        public IActionResult Chat()
+        {
+            return View();
+        }
+
     }
 }
