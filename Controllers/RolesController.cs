@@ -68,8 +68,7 @@ namespace GymSharp.Controllers
             List<IdentityUser> nonMembers = new List<IdentityUser>();
             foreach (IdentityUser user in userManager.Users)
             {
-                var list = await userManager.IsInRoleAsync(user, role.Name)
-               ? members : nonMembers;
+                var list = await userManager.IsInRoleAsync(user, role.Name) ? members : nonMembers;
                 list.Add(user);
             }
             return View(new RoleEdit
