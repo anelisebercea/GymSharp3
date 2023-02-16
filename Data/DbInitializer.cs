@@ -9,7 +9,7 @@ namespace GymSharp.Data
         public static void Initialize(IServiceProvider serviceProvider)
         {
             using (var context = new GymContext(serviceProvider.GetRequiredService<DbContextOptions<GymContext>>()))
-            {
+            { }
 
                 /*
                 if (context.Exercises.Any())
@@ -396,7 +396,7 @@ namespace GymSharp.Data
                     DifficultyLevel = "moderate",
                 }
                 );
-                */
+                
 
 
 
@@ -411,7 +411,7 @@ namespace GymSharp.Data
                 }
                 context.SaveChanges();
 
-                /*
+                
                 var muscleGroups = new MuscleGroup[]
                 {
 
@@ -446,7 +446,7 @@ namespace GymSharp.Data
                     context.WorkoutPlans.Add(pb);
                 }
                 
-                 */
+                 
 
 
                 var workoutplans = new WorkoutPlan[]
@@ -501,7 +501,9 @@ namespace GymSharp.Data
 
 
                 context.SaveChanges();
-            }
+                */
+
+            
         }
 
     }

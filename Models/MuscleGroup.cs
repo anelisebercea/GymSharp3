@@ -9,6 +9,7 @@ namespace GymSharp.Models
         public string Group { get; set; }
 
         public ICollection<WorkoutPlan> WorkoutPlans { get; set; }
+        
 
     }
 }

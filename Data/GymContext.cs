@@ -29,7 +29,7 @@ namespace GymSharp.Data
         }
 
 
-        public DbSet<GymSharp.Models.Trainer> Trainer { get; set; }
+        public DbSet<GymSharp.Models.Trainer> Trainers { get; set; }
 
 
     }

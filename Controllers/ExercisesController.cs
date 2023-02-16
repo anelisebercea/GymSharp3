@@ -7,9 +7,18 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using GymSharp.Data;
 using GymSharp.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Data;
+using GymSharp.Models.GymViewModels;
+
+//using GymSharp.Models.GymViewModels;
+//using static System.Reflection.Metadata.BlobBuilder;
+//using System.Net;
+//using System.Security.Policy;
 
 namespace GymSharp.Controllers
 {
+    [Authorize(Roles = "Employee, Manager")]
     public class ExercisesController : Controller
     {
         private readonly GymContext _context;
@@ -20,6 +29,7 @@ namespace GymSharp.Controllers
         }
 
         // GET: Exercises INDEX
+        [AllowAnonymous]
         public async Task<IActionResult> Index(string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
             IQueryable<Exercise> exercise = _context.Exercises.AsNoTracking();
@@ -88,14 +98,21 @@ namespace GymSharp.Controllers
         // GET: Exercises/Create
         public IActionResult Create()
         {
-            var trainers = _context.Trainer.Select(x => new
+
+            /*
+            ViewBag.TrainerId = new SelectList(_context.Trainers, "Id", "FullName");
+
+            return View();             
+             */
+            
+            var trainers = _context.Trainers.Select(x => new
             {
                 x.Id,
                 FullName = x.FirstName + " " + x.LastName
             });
-            ViewData["TrainerId"] = new SelectList(trainers, "Id", "FullName");
+            ViewBag.TrainerId = new SelectList(trainers, "Id", "FullName");
             return View();
-
+            
         }
 
 
@@ -107,13 +124,22 @@ namespace GymSharp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("ID,ExerciseName,TrainerId,Description,DifficultyLevel")] Exercise exercise)
         {
-            if (ModelState.IsValid)
+            try
             {
-                _context.Add(exercise);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (ModelState.IsValid)
+                {
+                    _context.Exercises.Add(exercise);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
             }
-            ViewData["TrainerId"] = new SelectList(_context.Trainer, "Id", "Id", exercise.TrainerId);
+            catch (DbUpdateException /* ex*/)
+            {
+
+                ModelState.AddModelError("", "Unable to save changes. " + "Try again");
+            }
+            ViewBag.TrainerId = new SelectList(_context.Trainers, "Id", "FullName", exercise.TrainerId);
+
             return View(exercise);
         }
 
@@ -130,9 +156,12 @@ namespace GymSharp.Controllers
             {
                 return NotFound();
             }
-            ViewData["TrainerId"] = new SelectList(_context.Trainer, "Id", "Id", exercise.TrainerId);
+            // ViewBag...
+            ViewBag.TrainerId = new SelectList(_context.Trainers, "Id", "FullName", exercise.TrainerId);
+            
             return View(exercise);
         }
+       
 
         // POST: Exercises/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -145,33 +174,34 @@ namespace GymSharp.Controllers
             {
                 return NotFound();
             }
-
-            if (ModelState.IsValid)
+            var exerciseToUpdate = await _context.Exercises
+                .Include(i => i.Trainer)
+                .Include(i => i.WorkoutPlans)
+                .FirstOrDefaultAsync(s => s.ID == id);
+            if (await TryUpdateModelAsync<Exercise>(exerciseToUpdate, "",
+                s => s.ExerciseName,
+                s => s.TrainerId,
+                s => s.Description,
+                s => s.DifficultyLevel
+                ))
             {
                 try
                 {
                     _context.Update(exercise);
                     await _context.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (DbUpdateException)
                 {
-                    if (!ExerciseExists(exercise.ID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    ModelState.AddModelError("", "Unable to save changes. " + "Try again");
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["TrainerId"] = new SelectList(_context.Trainer, "Id", "Id", exercise.TrainerId);
+            ViewBag.TrainerId = new SelectList(_context.Trainers, "Id", "FullName", exercise.TrainerId);
             return View(exercise);
         }
 
         // GET: Exercises/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int? id, bool? saveChangesError = false)
         {
             if (id == null || _context.Exercises == null)
             {
@@ -179,11 +209,18 @@ namespace GymSharp.Controllers
             }
 
             var exercise = await _context.Exercises
+                .AsNoTracking()
                 .Include(e => e.Trainer)
+                .Include(i => i.WorkoutPlans)
                 .FirstOrDefaultAsync(m => m.ID == id);
             if (exercise == null)
             {
                 return NotFound();
+            }
+
+            if (saveChangesError.GetValueOrDefault())
+            {
+                ViewData["ErrorMessage"] = "Delete failed. Try again";
             }
 
             return View(exercise);
@@ -199,18 +236,51 @@ namespace GymSharp.Controllers
                 return Problem("Entity set 'GymContext.Exercises'  is null.");
             }
             var exercise = await _context.Exercises.FindAsync(id);
-            if (exercise != null)
+
+            if (exercise == null)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            try 
             {
                 _context.Exercises.Remove(exercise);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            catch (DbUpdateException /* ex */)
+            {
+                return RedirectToAction(nameof(Delete), new { id = id, saveChangesError = true });
+            }
+
         }
 
         private bool ExerciseExists(int id)
         {
           return _context.Exercises.Any(e => e.ID == id);
         }
+
+
+
+        
+        public async Task<ActionResult> Statistics()
+        {
+            IQueryable<MeasurementGroup> data =
+            from measurement in _context.Measurements
+            group measurement by measurement.Date into dateGroup
+            select new MeasurementGroup()
+            {
+                Date = dateGroup.Key,
+                ExerciseCount = dateGroup.Count()
+            };
+            return View(await data.AsNoTracking().ToListAsync());
+        }
+        
+
+        public IActionResult Chat()
+        {
+            return View();
+        }
+
+
     }
 }

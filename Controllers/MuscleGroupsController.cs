@@ -9,10 +9,11 @@ using GymSharp.Data;
 using GymSharp.Models;
 using GymSharp.Models.GymViewModels;
 using System.Security.Policy;
-
+using Microsoft.AspNetCore.Authorization;
 
 namespace GymSharp.Controllers
 {
+    [Authorize(Policy = "OnlyCertified")]
     public class MuscleGroupsController : Controller
     {
         private readonly GymContext _context;
@@ -30,7 +31,7 @@ namespace GymSharp.Controllers
         }
         */
 
-
+        [AllowAnonymous]
         public async Task<IActionResult> Index(int? id, int? exerciseID)
         {
             var viewModel = new MuscleGroupIndexData();
@@ -64,6 +65,7 @@ namespace GymSharp.Controllers
 
 
         // GET: MuscleGroups/Details/5
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null || _context.MuscleGroups == null)
@@ -96,7 +98,7 @@ namespace GymSharp.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(muscleGroup);
+                _context.MuscleGroups.Add(muscleGroup);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }

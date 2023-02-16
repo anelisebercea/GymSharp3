@@ -19,20 +19,15 @@ namespace GymSharp.Controllers
         }
 
         public ViewResult Index() => View(roleManager.Roles);
-        private void Errors(IdentityResult result)
-        {
-            foreach (IdentityError error in result.Errors)
-                ModelState.AddModelError("", error.Description);
-        }
 
         public IActionResult Create() => View();
+
         [HttpPost]
         public async Task<IActionResult> Create([Required] string name)
         {
             if (ModelState.IsValid)
             {
-                IdentityResult result = await roleManager.CreateAsync(new
-               IdentityRole(name));
+                IdentityResult result = await roleManager.CreateAsync(new IdentityRole(name));
                 if (result.Succeeded)
                     return RedirectToAction("Index");
                 else
@@ -47,8 +42,7 @@ namespace GymSharp.Controllers
             IdentityRole role = await roleManager.FindByIdAsync(id);
             if (role != null)
             {
-                IdentityResult result = await
-               roleManager.DeleteAsync(role);
+                IdentityResult result = await roleManager.DeleteAsync(role);
                 if (result.Succeeded)
                     return RedirectToAction("Index");
                 else
@@ -90,20 +84,17 @@ namespace GymSharp.Controllers
                    userManager.FindByIdAsync(userId);
                     if (user != null)
                     {
-                        result = await userManager.AddToRoleAsync(user,
-                       model.RoleName);
+                        result = await userManager.AddToRoleAsync(user, model.RoleName);
                         if (!result.Succeeded)
                             Errors(result);
                     }
                 }
                 foreach (string userId in model.DeleteIds ?? new string[] {})
                 {
-                    IdentityUser user = await
-                   userManager.FindByIdAsync(userId);
+                    IdentityUser user = await userManager.FindByIdAsync(userId);
                     if (user != null)
                     {
-                        result = await
-                       userManager.RemoveFromRoleAsync(user, model.RoleName);
+                        result = await userManager.RemoveFromRoleAsync(user, model.RoleName);
                         if (!result.Succeeded)
                             Errors(result);
                     }
@@ -116,7 +107,11 @@ namespace GymSharp.Controllers
         }
 
 
-
+        private void Errors(IdentityResult result)
+        {
+            foreach (IdentityError error in result.Errors)
+                ModelState.AddModelError("", error.Description);
+        }
 
 
     }

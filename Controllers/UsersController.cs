@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using GymSharp.Data;
 using GymSharp.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GymSharp.Controllers
 {
+    [Authorize(Policy = "Manager")]
     public class UsersController : Controller
     {
         private readonly GymContext _context;

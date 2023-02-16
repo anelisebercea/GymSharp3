@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace GymSharp.Models
 {
@@ -10,6 +12,8 @@ namespace GymSharp.Models
         public int ID { get; set; }
         public int UserID { get; set; }
         public int ExerciseID { get; set; }
+        [Display(Name = "Date")]
+        [DataType(DataType.Date)]
         public DateTime Date { get; set; }
         public float Weight { get; set; }
         public float BodyFatPercentage { get; set; }

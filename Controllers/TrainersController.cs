@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using GymSharp.Data;
 using GymSharp.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GymSharp.Controllers
 {
+    [Authorize(Policy = "OnlyCertified")]
     public class TrainersController : Controller
     {
         private readonly GymContext _context;
@@ -20,20 +22,22 @@ namespace GymSharp.Controllers
         }
 
         // GET: Trainers
+        [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
-              return View(await _context.Trainer.ToListAsync());
+              return View(await _context.Trainers.ToListAsync());
         }
 
         // GET: Trainers/Details/5
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Trainer == null)
+            if (id == null || _context.Trainers == null)
             {
                 return NotFound();
             }
 
-            var trainer = await _context.Trainer
+            var trainer = await _context.Trainers
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (trainer == null)
             {
@@ -58,7 +62,7 @@ namespace GymSharp.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(trainer);
+                _context.Trainers.Add(trainer);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
@@ -68,12 +72,12 @@ namespace GymSharp.Controllers
         // GET: Trainers/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Trainer == null)
+            if (id == null || _context.Trainers == null)
             {
                 return NotFound();
             }
 
-            var trainer = await _context.Trainer.FindAsync(id);
+            var trainer = await _context.Trainers.FindAsync(id);
             if (trainer == null)
             {
                 return NotFound();
@@ -119,12 +123,12 @@ namespace GymSharp.Controllers
         // GET: Trainers/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.Trainer == null)
+            if (id == null || _context.Trainers == null)
             {
                 return NotFound();
             }
 
-            var trainer = await _context.Trainer
+            var trainer = await _context.Trainers
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (trainer == null)
             {
@@ -139,14 +143,14 @@ namespace GymSharp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Trainer == null)
+            if (_context.Trainers == null)
             {
                 return Problem("Entity set 'GymContext.Trainer'  is null.");
             }
-            var trainer = await _context.Trainer.FindAsync(id);
+            var trainer = await _context.Trainers.FindAsync(id);
             if (trainer != null)
             {
-                _context.Trainer.Remove(trainer);
+                _context.Trainers.Remove(trainer);
             }
             
             await _context.SaveChangesAsync();
@@ -155,7 +159,7 @@ namespace GymSharp.Controllers
 
         private bool TrainerExists(int id)
         {
-          return _context.Trainer.Any(e => e.Id == id);
+          return _context.Trainers.Any(e => e.Id == id);
         }
     }
 }

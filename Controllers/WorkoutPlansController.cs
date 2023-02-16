@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using GymSharp.Data;
 using GymSharp.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GymSharp.Controllers
 {
+    [Authorize(Policy = "OnlyCertified")]
     public class WorkoutPlansController : Controller
     {
         private readonly GymContext _context;
@@ -20,6 +22,7 @@ namespace GymSharp.Controllers
         }
 
         // GET: WorkoutPlans
+        [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
             var gymContext = _context.WorkoutPlans.Include(w => w.Exercise).Include(w => w.MuscleGroup);
@@ -27,6 +30,7 @@ namespace GymSharp.Controllers
         }
 
         // GET: WorkoutPlans/Details/5
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null || _context.WorkoutPlans == null)
@@ -61,11 +65,18 @@ namespace GymSharp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("MuscleGroupID,ExerciseID")] WorkoutPlan workoutPlan)
         {
-            if (ModelState.IsValid)
+            try
             {
-                _context.Add(workoutPlan);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (ModelState.IsValid)
+                {
+                    _context.Add(workoutPlan);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            catch(DbUpdateException) 
+            {
+                ModelState.AddModelError("", "Unable to save changes. " + "Try again, and if the problem persists ");
             }
             ViewData["ExerciseID"] = new SelectList(_context.Exercises, "ID", "ID", workoutPlan.ExerciseID);
             ViewData["MuscleGroupID"] = new SelectList(_context.MuscleGroups, "ID", "Group", workoutPlan.MuscleGroupID);
@@ -93,42 +104,38 @@ namespace GymSharp.Controllers
         // POST: WorkoutPlans/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("MuscleGroupID,ExerciseID")] WorkoutPlan workoutPlan)
+        public async Task<IActionResult> EditPost(int? id)
         {
-            if (id != workoutPlan.ExerciseID)
+            if (id == null)
             {
                 return NotFound();
             }
-
-            if (ModelState.IsValid)
+            var workoutPlanToUpdate = await _context.WorkoutPlans.FirstOrDefaultAsync(s => s.MuscleGroupID == id);
+            
+            if (await TryUpdateModelAsync<WorkoutPlan>(workoutPlanToUpdate))
             {
                 try
                 {
-                    _context.Update(workoutPlan);
+                    
                     await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (DbUpdateException)
                 {
-                    if (!WorkoutPlanExists(workoutPlan.ExerciseID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    ModelState.AddModelError("", "Unable to save changes. " + "Try again, and if the problem persists");
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ExerciseID"] = new SelectList(_context.Exercises, "ID", "ID", workoutPlan.ExerciseID);
-            ViewData["MuscleGroupID"] = new SelectList(_context.MuscleGroups, "ID", "Group", workoutPlan.MuscleGroupID);
-            return View(workoutPlan);
+            ViewData["ExerciseID"] = new SelectList(_context.Exercises, "ID", "ID", workoutPlanToUpdate.ExerciseID);
+            ViewData["MuscleGroupID"] = new SelectList(_context.MuscleGroups, "ID", "Group", workoutPlanToUpdate.MuscleGroupID);
+            return View(workoutPlanToUpdate);
+
         }
 
         // GET: WorkoutPlans/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int? id, bool? saveChangesError = false)
         {
             if (id == null || _context.WorkoutPlans == null)
             {
@@ -136,6 +143,7 @@ namespace GymSharp.Controllers
             }
 
             var workoutPlan = await _context.WorkoutPlans
+                .AsNoTracking()
                 .Include(w => w.Exercise)
                 .Include(w => w.MuscleGroup)
                 .FirstOrDefaultAsync(m => m.ExerciseID == id);
@@ -143,7 +151,10 @@ namespace GymSharp.Controllers
             {
                 return NotFound();
             }
-
+            if (saveChangesError.GetValueOrDefault())
+            {
+                ViewData["ErrorMessage"] = "Delete failed. Try again";
+            }
             return View(workoutPlan);
         }
 
@@ -157,13 +168,21 @@ namespace GymSharp.Controllers
                 return Problem("Entity set 'GymContext.WorkoutPlans'  is null.");
             }
             var workoutPlan = await _context.WorkoutPlans.FindAsync(id);
-            if (workoutPlan != null)
+            if (workoutPlan == null)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            try
             {
                 _context.WorkoutPlans.Remove(workoutPlan);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException /* ex */)
+            {
+                return RedirectToAction(nameof(Delete), new { id = id, saveChangesError = true });
             }
             
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
         }
 
         private bool WorkoutPlanExists(int id)

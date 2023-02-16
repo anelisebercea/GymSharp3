@@ -8,6 +8,8 @@
         public string Specialization { get; set; }
         public string Qualification { get; set; }
 
-        public ICollection<Exercise>? Exercises { get; set; }
+        //public ICollection<Exercise>? Exercises { get; set; }
+        public List<Exercise>? Exercises { get; set; }
+
     }
 }
